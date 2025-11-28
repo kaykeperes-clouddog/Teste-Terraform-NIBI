@@ -1,0 +1,46 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Installing dependencies..."
+      - yum update -y
+      - yum install -y curl unzip jq ca-certificates python3 python3-pip
+      
+      # Install AWS CLI
+      - |
+        if yum install -y awscli >/dev/null 2>&1; then
+          echo "aws-cli instalado via yum";
+        else
+          echo "aws-cli não disponível no yum; usando pip";
+          pip3 install --no-cache-dir awscli;
+        fi
+      - aws --version
+      
+      # Install Terraform CLI
+      - wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
+      - unzip terraform_1.6.0_linux_amd64.zip
+      - mv terraform /usr/local/bin/
+      - terraform --version
+
+  pre_build:
+    commands:
+      - echo "Pre-build phase started on `date`"
+      
+  build:
+    commands:
+      - echo "Deploy to Staging started on `date`"
+      
+      # Deploy to Staging Account
+      - echo "Deploying to Staging Account..."
+      - |
+        TEMP_ROLE=$(aws sts assume-role --role-arn $STG_ROLE_ARN --role-session-name "pipeline-deploy-staging")
+        export AWS_ACCESS_KEY_ID=$(echo $TEMP_ROLE | jq -r '.Credentials.AccessKeyId')
+        export AWS_SECRET_ACCESS_KEY=$(echo $TEMP_ROLE | jq -r '.Credentials.SecretAccessKey')
+        export AWS_SESSION_TOKEN=$(echo $TEMP_ROLE | jq -r '.Credentials.SessionToken')
+        terraform init -backend-config=backend/backend-stg.hcl
+        terraform apply -var-file=envs/stg.tfvars -auto-approve tfplan-stg 
+      
+  post_build:
+    commands:
+      - echo "Deploy to Staging completed on `date`"
