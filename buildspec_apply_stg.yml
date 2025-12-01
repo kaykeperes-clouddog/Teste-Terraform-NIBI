@@ -7,12 +7,9 @@ phases:
     commands:
       - echo "Installing dependencies..."
       - dnf install -y unzip jq wget --allowerasing
-      
-      # Install AWS CLI
       - pip3 install --no-cache-dir awscli
       - aws --version
-      
-      # Install Terraform CLI
+
       - wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
       - unzip terraform_1.6.0_linux_amd64.zip
       - mv terraform /usr/local/bin/
@@ -21,7 +18,7 @@ phases:
   pre_build:
     commands:
       - echo "=== PRE-BUILD APPLY STG ==="
-      - echo "--- LISTING FILES RECEIVED FROM PLAN STAGE ---"
+      - echo "--- LISTING FILES RECEIVED ---"
       - ls -R
 
       - echo "--- DEBUG: Searching for tfplan-stg ---"
@@ -33,16 +30,18 @@ phases:
   build:
     commands:
       - echo "Deploy to Staging started on `date`"
-
       - echo "Assuming role to STG..."
+
       - |
-        TEMP_ROLE=$(aws sts assume-role --role-arn $STG_ROLE_ARN --role-session-name "pipeline-deploy-staging")
+        TEMP_ROLE=$(aws sts assume-role --role-arn $STG_ROLE_ARN --role-session-name pipeline-deploy-staging)
         export AWS_ACCESS_KEY_ID=$(echo $TEMP_ROLE | jq -r '.Credentials.AccessKeyId')
         export AWS_SECRET_ACCESS_KEY=$(echo $TEMP_ROLE | jq -r '.Credentials.SecretAccessKey')
         export AWS_SESSION_TOKEN=$(echo $TEMP_ROLE | jq -r '.Credentials.SessionToken')
 
       - echo "Applying plan..."
       - terraform apply -auto-approve tfplan-stg
+
+      - echo "OK" > apply_done.txt
 
   post_build:
     commands:
