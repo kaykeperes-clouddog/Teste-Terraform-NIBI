@@ -8,10 +8,17 @@ env:
 
 phases:
   install:
+    runtime-versions:
+      python: 3.11
     commands:
-      - apk update
-      - apk add --no-cache curl unzip ca-certificates aws-cli jq
-      - 'ARCH=$(uname -m); if [ "$ARCH" = "x86_64" ]; then TARCH=amd64; elif [ "$ARCH" = "aarch64" ]; then TARCH=arm64; else echo "Arquitetura não suportada: $ARCH"; exit 1; fi; URL="https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_${TARCH}.zip"; echo "Baixando Terraform de: $URL"; curl -fSLo terraform.zip "$URL"; unzip -o terraform.zip; install -m 0755 terraform /usr/local/bin/terraform; rm -f terraform terraform.zip; terraform -version'
+      - echo "Installing dependencies..."
+      - dnf install -y unzip jq wget --allowerasing
+      - pip3 install --no-cache-dir awscli
+      - aws --version
+      - wget https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+      - unzip terraform_${TF_VERSION}_linux_amd64.zip
+      - mv terraform /usr/local/bin/
+      - terraform --version
 
   pre_build:
     commands:
