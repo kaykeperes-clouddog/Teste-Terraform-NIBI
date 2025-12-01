@@ -32,9 +32,10 @@ phases:
       - echo "Deploy to Staging started on `date`"
       - echo "Assuming role to STG..."
 
-      - TEMP_ROLE=$(aws sts assume-role --role-arn $STG_ROLE_ARN --role-session-name pipeline-deploy-staging); \
-        export AWS_ACCESS_KEY_ID=$(echo $TEMP_ROLE | jq -r '.Credentials.AccessKeyId'); \
-        export AWS_SECRET_ACCESS_KEY=$(echo $TEMP_ROLE | jq -r '.Credentials.SecretAccessKey'); \
+      - |
+        TEMP_ROLE=$(aws sts assume-role --role-arn $STG_ROLE_ARN --role-session-name pipeline-deploy-staging)
+        export AWS_ACCESS_KEY_ID=$(echo $TEMP_ROLE | jq -r '.Credentials.AccessKeyId')
+        export AWS_SECRET_ACCESS_KEY=$(echo $TEMP_ROLE | jq -r '.Credentials.SecretAccessKey')
         export AWS_SESSION_TOKEN=$(echo $TEMP_ROLE | jq -r '.Credentials.SessionToken')
 
       - echo "Applying plan..."
