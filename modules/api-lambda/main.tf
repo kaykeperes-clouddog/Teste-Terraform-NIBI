@@ -1,6 +1,6 @@
 # S3 Bucket para teste
 resource "aws_s3_bucket" "test_bucket" {
-  bucket = "${var.project}-${var.environment}-test-bucket-V1"
+  bucket = "${var.project}-${var.environment}-test-bucket-bucket"
 }
 
 resource "aws_s3_bucket_versioning" "test_bucket_versioning" {
