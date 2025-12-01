@@ -27,6 +27,9 @@ phases:
       - export AWS_ACCESS_KEY_ID=$(echo $TEMP_ROLE | jq -r '.Credentials.AccessKeyId')
       - export AWS_SECRET_ACCESS_KEY=$(echo $TEMP_ROLE | jq -r '.Credentials.SecretAccessKey')
       - export AWS_SESSION_TOKEN=$(echo $TEMP_ROLE | jq -r '.Credentials.SessionToken')
+      - echo "Initializing Terraform..."
+      - TF_DIR="${CODEBUILD_SRC_DIR_TerraformSource}/${CODE_SRC_DIR}"
+      - terraform -chdir="$TF_DIR" init -backend-config=backend/backend-stg.hcl
 
   build:
     commands:
