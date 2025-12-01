@@ -1,54 +1,38 @@
 version: 0.2
 
+env:
+  variables:
+    CODE_SRC_DIR: "."
+    TF_VERSION: "1.6.0"
+    TF_VARS_FILE: "stg.tfvars"
+
 phases:
   install:
-    runtime-versions:
-      python: 3.11
     commands:
-      - echo "Installing dependencies..."
-      - dnf install -y unzip jq wget --allowerasing
-      - pip3 install --no-cache-dir awscli
-      - aws --version
-
-      - wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
-      - unzip terraform_1.6.0_linux_amd64.zip
-      - mv terraform /usr/local/bin/
-      - terraform --version
+      - apk update
+      - apk add --no-cache curl unzip ca-certificates aws-cli jq
+      - 'ARCH=$(uname -m); if [ "$ARCH" = "x86_64" ]; then TARCH=amd64; elif [ "$ARCH" = "aarch64" ]; then TARCH=arm64; else echo "Arquitetura não suportada: $ARCH"; exit 1; fi; URL="https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_${TARCH}.zip"; echo "Baixando Terraform de: $URL"; curl -fSLo terraform.zip "$URL"; unzip -o terraform.zip; install -m 0755 terraform /usr/local/bin/terraform; rm -f terraform terraform.zip; terraform -version'
 
   pre_build:
     commands:
-      - echo "=== PRE-BUILD APPLY STG ==="
-      - echo "--- LISTING FILES RECEIVED ---"
-      - ls -R
-
-      - echo "--- DEBUG: Searching for tfplan-stg ---"
-      - find . -maxdepth 3 -name "tfplan-stg"
-
-      - echo "Reinitializing Terraform..."
-      - terraform init -backend-config=backend/backend-stg.hcl
+      - echo "Assuming role for Staging deployment..."
+      - TEMP_ROLE=$(aws sts assume-role --role-arn $STG_ROLE_ARN --role-session-name "pipeline-deploy-staging")
+      - export AWS_ACCESS_KEY_ID=$(echo $TEMP_ROLE | jq -r '.Credentials.AccessKeyId')
+      - export AWS_SECRET_ACCESS_KEY=$(echo $TEMP_ROLE | jq -r '.Credentials.SecretAccessKey')
+      - export AWS_SESSION_TOKEN=$(echo $TEMP_ROLE | jq -r '.Credentials.SessionToken')
 
   build:
     commands:
-      - echo "Deploy to Staging started on `date`"
-      - echo "Assuming role to STG..."
-
-      - |
-        TEMP_ROLE=$(aws sts assume-role --role-arn $STG_ROLE_ARN --role-session-name pipeline-deploy-staging)
-        export AWS_ACCESS_KEY_ID=$(echo $TEMP_ROLE | jq -r '.Credentials.AccessKeyId')
-        export AWS_SECRET_ACCESS_KEY=$(echo $TEMP_ROLE | jq -r '.Credentials.SecretAccessKey')
-        export AWS_SESSION_TOKEN=$(echo $TEMP_ROLE | jq -r '.Credentials.SessionToken')
-
-      - echo "Applying plan..."
-      - terraform apply -auto-approve tfplan-stg
-
-      - echo "OK" > apply_done.txt
+      - TF_DIR="${CODEBUILD_SRC_DIR_TerraformSource}/${CODE_SRC_DIR}"
+      - terraform -chdir="$TF_DIR" apply -input=false -auto-approve "${CODEBUILD_SRC_DIR_PlanStagingOutput}/tfplan-stg"
+      - 'printf "Apply OK at %s\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > apply_done.txt'
 
   post_build:
     commands:
-      - echo "Apply completed on `date`"
+      - echo "Deploy to Staging completed on `date`"
 
 artifacts:
   files:
     - apply_done.txt
   discard-paths: no
-  name: apply-output
+  name: ApplyOutput
