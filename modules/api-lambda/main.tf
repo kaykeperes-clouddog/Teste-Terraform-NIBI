@@ -8,7 +8,7 @@ data "archive_file" "lambda_zip" {
 }
 
 resource "aws_iam_role" "lambda_role" {
-  name = "${var.project}-${var.environment}-lambda-role"
+  name = "${var.project}-${var.environment}-lambda-role-v1"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
