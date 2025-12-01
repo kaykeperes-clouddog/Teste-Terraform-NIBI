@@ -27,8 +27,10 @@ phases:
       - export AWS_ACCESS_KEY_ID=$(echo $TEMP_ROLE | jq -r '.Credentials.AccessKeyId')
       - export AWS_SECRET_ACCESS_KEY=$(echo $TEMP_ROLE | jq -r '.Credentials.SecretAccessKey')
       - export AWS_SESSION_TOKEN=$(echo $TEMP_ROLE | jq -r '.Credentials.SessionToken')
-      - echo "Copying lock file from plan artifact..."
+      - echo "Setting up Terraform directory..."
       - TF_DIR="${CODEBUILD_SRC_DIR_TerraformSource}/${CODE_SRC_DIR}"
+      - echo "Copying artifacts to Terraform directory..."
+      - cp "${CODEBUILD_SRC_DIR_PlanStagingOutput}/tfplan-stg" "$TF_DIR/tfplan-stg"
       - cp "${CODEBUILD_SRC_DIR_PlanStagingOutput}/.terraform.lock.hcl" "$TF_DIR/.terraform.lock.hcl" || echo "Lock file not found in artifact"
       - echo "Initializing Terraform..."
       - terraform -chdir="$TF_DIR" init -backend-config=backend/backend-stg.hcl
@@ -36,7 +38,7 @@ phases:
   build:
     commands:
       - TF_DIR="${CODEBUILD_SRC_DIR_TerraformSource}/${CODE_SRC_DIR}"
-      - terraform -chdir="$TF_DIR" apply -input=false -auto-approve "${CODEBUILD_SRC_DIR_PlanStagingOutput}/tfplan-stg"
+      - terraform -chdir="$TF_DIR" apply -input=false -auto-approve tfplan-stg
       - 'printf "Apply OK at %s\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > apply_done.txt'
 
   post_build:
