@@ -37,6 +37,9 @@ phases:
 
 artifacts:
   files:
-    - tfplan-stg 
+    - tfplan-stg
     - .terraform/**/*
+    - .terraform.lock.hcl
+    # Inclua outros arquivos necessários para o apply (ex: scripts, configs)
+  name: tfplan-artifact
   discard-paths: no
