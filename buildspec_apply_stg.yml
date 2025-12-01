@@ -24,7 +24,11 @@ phases:
       
   build:
     commands:
+      - echo "--- LISTANDO ARQUIVOS ---"
+      - ls -R   
       - echo "Deploy to Staging started on `date`"
+
+
       
       # Deploy to Staging Account
       - echo "Deploying to Staging Account..."
