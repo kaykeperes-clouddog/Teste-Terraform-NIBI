@@ -29,7 +29,10 @@ phases:
       # Validate Staging Environment
       - echo "Validating Staging environment..."
       - terraform init -backend-config=backend/backend-stg.hcl
-      - terraform plan -var-file="envs/stg.tfvars" -out=tfplan-stg      
+      - terraform plan -var-file="envs/stg.tfvars" -out=tfplan-stg
+      - echo "Checking for generated files..."
+      - find . -name "*.zip" -type f
+      - ls -la modules/api-lambda/ || echo "modules directory not found"      
       
   post_build:
     commands:
@@ -40,6 +43,6 @@ artifacts:
     - tfplan-stg
     - .terraform/**/*
     - .terraform.lock.hcl
-    # Inclua outros arquivos necessários para o apply (ex: scripts, configs)
+    - modules/**/*.zip
   name: tfplan-artifact
   discard-paths: no
