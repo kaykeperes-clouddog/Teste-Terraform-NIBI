@@ -33,8 +33,7 @@ phases:
         export AWS_ACCESS_KEY_ID=$(echo $TEMP_ROLE | jq -r '.Credentials.AccessKeyId')
         export AWS_SECRET_ACCESS_KEY=$(echo $TEMP_ROLE | jq -r '.Credentials.SecretAccessKey')
         export AWS_SESSION_TOKEN=$(echo $TEMP_ROLE | jq -r '.Credentials.SessionToken')
-        terraform init -backend-config=backend/backend-stg.hcl
-        terraform apply -var-file=envs/stg.tfvars -auto-approve tfplan-stg 
+        terraform apply -auto-approve tfplan-stg 
       
   post_build:
     commands:
