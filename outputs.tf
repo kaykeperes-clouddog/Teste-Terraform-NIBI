@@ -3,7 +3,7 @@ output "api_gateway_url" {
   value       = module.api_lambda.api_gateway_url
 }
 
-output "lambda_function_name" {
-  description = "Nome da função Lambda"
-  value       = module.api_lambda.lambda_function_name
+output "s3_bucket_name" {
+  description = "Nome do bucket S3"
+  value       = module.api_lambda.s3_bucket_name
 }
