@@ -40,7 +40,7 @@ phases:
   build:
     commands:
       - TF_DIR="${CODEBUILD_SRC_DIR_TerraformSource}/${CODE_SRC_DIR}"
-      - terraform -chdir="$TF_DIR" apply -input=false -auto-approve tfplan-prd
+      - terraform -chdir="$TF_DIR" apply -input=false -auto-approve tfplan-prod
       - 'printf "Apply OK at %s\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > apply_done.txt'
 
   post_build:
